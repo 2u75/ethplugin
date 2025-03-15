@@ -1,14 +1,12 @@
 {
-    "name": "Template Plugin",
-    "description": "A plugin for use as a template.",
+    "name": "BluetoothAudioFix",
+    "description": "Prevents Discord from switching your Bluetooth headset into low-quality handsfree mode.",
     "authors": [
-        {
-            "name": "You!",
-            "id": "YOUR_ID_HERE"
-        }
+      {
+        "name": "Your Name",
+        "id": "Your Discord ID"
+      }
     ],
-    "main": "src/index.ts",
-    "vendetta": {
-        "icon": "ic_badge_staff"
-    }
-}
+    "main": "index.js"
+  }
+  

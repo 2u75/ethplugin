@@ -1,12 +1,24 @@
+import { instead } from "@vendetta/patcher";
+import { findByProps } from "@vendetta/metro";
 import { logger } from "@vendetta";
-import Settings from "./Settings";
 
-export default {
-    onLoad: () => {
-        logger.log("Hello world!");
-    },
-    onUnload: () => {
-        logger.log("Goodbye, world.");
-    },
-    settings: Settings,
-}
+const voiceUtil = findByProps("setSelfDeaf");
+
+export const onLoad = () => {
+  if (!voiceUtil) {
+    logger.error("Voice utilities module not found.");
+    return;
+  }
+
+  instead(voiceUtil, "setSelfDeaf", (args, original) => {
+    // Your custom logic here
+    return original(...args);
+  });
+
+  logger.log("BluetoothAudioFix loaded.");
+};
+
+export const onUnload = () => {
+  // Cleanup logic here
+  logger.log("BluetoothAudioFix unloaded.");
+};
