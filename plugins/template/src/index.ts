@@ -1,61 +1,54 @@
+import { instead } from "@vendetta/patcher";
 import { findByProps } from "@vendetta/metro";
-import { before, after } from "@vendetta/patcher";
+import { logger } from "@vendetta";
 
-// Find relevant modules - Names might change! This requires exploration.
-const VoiceEngine = findByProps("setTransportOptions", "getVoiceEngine"); // Might manage voice connection settings
-const ConnectionStore = findByProps("getPacketLossRate", "getQuality"); // Might store connection quality info
+// Attempt a more specific search for the voice utility module
+// This assumes setSelfMute is often found alongside setSelfDeaf
+const voiceUtil = findByProps("setSelfDeaf", "setSelfMute", "setLocalVolume"); // Add more known related props if needed
 
-let patches = [];
+let unpatch; // Store the unpatch function
 
-export default {
-    onLoad: () => {
-        // --- Attempt 1: Modify outgoing transport options ---
-        // Try to force higher quality settings when connection options are set.
-        if (VoiceEngine?.setTransportOptions) {
-            patches.push(before("setTransportOptions", VoiceEngine, (args) => {
-                // Args structure is unknown, needs inspection.
-                // This is a guess: args[0] might be an options object.
-                if (args[0] && typeof args[0] === 'object') {
-                    // Force higher bitrate? Disable adaptive quality?
-                    // args[0].audioBitrate = 128000; // Example: Force 128kbps
-                    // args[0].adaptiveQuality = false; // Example: Disable adaptation
-                    // console.log("Attempting to modify voice transport options:", args[0]);
-                }
-            }));
-        } else {
-            console.error("VoiceQualityEnhancer: Could not find VoiceEngine.setTransportOptions");
-        }
+export const onLoad = () => {
+  if (!voiceUtil) {
+    logger.error("BluetoothAudioFix: Voice utilities module not found. The module structure likely changed.");
+    return; // Stop loading if the module isn't found
+  }
 
-        // --- Attempt 2: Override quality reporting ---
-        // Try to make the client always report 'good' quality, potentially fooling UI elements.
-        // This likely won't actually improve the audio stream quality itself.
-        if (ConnectionStore?.getQuality) {
-             patches.push(after("getQuality", ConnectionStore, (args, ret) => {
-                 // Force return value to indicate optimal quality
-                 // The actual values ('POOR', 'GOOD', 'EXCELLENT' etc.) need verification.
-                 // console.log(`Original voice quality: ${ret}`);
-                 return "EXCELLENT"; // Or whatever represents the highest quality state
-             }));
-        } else {
-             console.error("VoiceQualityEnhancer: Could not find ConnectionStore.getQuality");
-        }
+  logger.log("BluetoothAudioFix: Found voice utilities module.");
 
-        // --- Attempt 3: Modify specific function setting low quality mode ---
-        // This requires identifying the exact function Discord calls to enter low quality mode.
-        // const SomeInternalModule = findByProps("switchToLowQualityMode"); // Purely fictional
-        // if (SomeInternalModule?.switchToLowQualityMode) {
-        //     patches.push(before("switchToLowQualityMode", SomeInternalModule, (args) => {
-        //         console.log("Preventing switch to low quality mode.");
-        //         return false; // Attempt to cancel the function call
-        //     }));
-        // }
+  // Use try-catch to handle potential errors during patching or execution
+  try {
+    // Store the unpatch function returned by instead()
+    unpatch = instead("setSelfDeaf", voiceUtil, (args, original) => {
+      logger.log(`BluetoothAudioFix: setSelfDeaf called with args: ${JSON.stringify(args)}`);
 
-        console.log("VoiceQualityEnhancer loaded. Patches applied:", patches.length);
-    },
+      // --- Your custom logic would go here ---
+      // Example: Log that you are intercepting the call
+      logger.log("BluetoothAudioFix: Intercepting setSelfDeaf call.");
+      // ----------------------------------------
 
-    onUnload: () => {
-        patches.forEach(unpatch => unpatch?.());
-        patches = [];
-        console.log("VoiceQualityEnhancer unloaded.");
-    }
-}
+      // Call the original function with the original arguments
+      // Use apply to ensure correct context ('this')
+      return original.apply(voiceUtil, args);
+    });
+
+    logger.log("BluetoothAudioFix: Patch applied successfully to setSelfDeaf.");
+
+  } catch (err) {
+    logger.error(`BluetoothAudioFix: Failed to patch setSelfDeaf: ${err}`);
+    // Clean up if patching failed immediately
+    unpatch?.();
+    unpatch = null;
+  }
+};
+
+export const onUnload = () => {
+  // Use the stored unpatch function
+  if (unpatch) {
+    unpatch();
+    logger.log("BluetoothAudioFix: setSelfDeaf patch removed.");
+  } else {
+    logger.log("BluetoothAudioFix: No active patch to remove.");
+  }
+  unpatch = null; // Clear the stored function
+};
