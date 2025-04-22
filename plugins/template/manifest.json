@@ -1,12 +1,14 @@
 {
-    "name": "BluetoothAudioFix",
-    "description": "Prevents Discord from switching your Bluetooth headset into low-quality handsfree mode.",
-    "authors": [
-      {
-        "name": "Your Name",
-        "id": "Your Discord ID"
-      }
-    ],
-    "main": "index.js"
+  "name": "VoiceQualityEnhancer",
+  "description": "Attempts to prevent low quality voice state. Highly experimental.",
+  "authors": [
+    {
+      "name": "Hypothetical Dev",
+      "id": "000000000000000000"
+    }
+  ],
+  "main": "index.js",
+  "vendetta": {
+    "icon": "ic_audio"
   }
-  
+}
