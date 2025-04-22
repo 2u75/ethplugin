@@ -1,0 +1,1 @@
+{"name":"VoiceQualityEnhancer","description":"Attempts to prevent low quality voice state. Highly experimental.","authors":[{"name":"Ethan!","id":"795329777753653278"}],"main":"index.js","vendetta":{"icon":"ic_audio"},"hash":"06eb37f0c94f67c7acb4cb6b3eb05197b94a112c828ed8417850fa028c849a33"}
